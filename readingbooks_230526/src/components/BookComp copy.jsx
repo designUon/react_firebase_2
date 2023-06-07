@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 //초기화해준 db 들고오기
 import { db } from '../database/firebase';
 import { collection, addDoc, Timestamp, getDocs, doc, deleteDoc, updateDoc, query, where } from "firebase/firestore";
-import AddBookBox from './AddBookBox';
 
 export default function BookComp() {
 
@@ -20,7 +19,52 @@ export default function BookComp() {
 
 
 
+    // 책 추가 메소드
+    // const addBook = (e) => {
+    // 아래 await 를 사용하기위해 async 추가
+    const addBook = async (e) => {
 
+        e.preventDefault();
+
+        // 데이터 추가에서 가져온 내용
+        // https://firebase.google.com/docs/firestore/quickstart?hl=ko&authuser=0#add_data
+
+        // try하는 중에 오류가 생기면 catch값이 출력
+        // addDoc과 연결된 모든 내용은 try안에 입력
+        try {
+            // try안에 작성되는 내용은 서버와 연결되고,
+            // 서버에서 받아온 값을 활용하는 내용
+            // const docRef = await addDoc(collection(db, "users"), {
+            const docRef = await addDoc(collection(db, "readingbooks"), { // "readingbooks" Cloud Firestore의 생성될 컬렉션명
+                // first: "Ada",
+                // last: "Lovelace",
+                // born: 1815
+                done: false, // 고정값
+                memo: "", // 고정값
+                // https://firebase.google.com/docs/firestore/manage-data/add-data?hl=ko&authuser=0#data_types
+                // API참조 => 웹
+                // https://firebase.google.com/docs/reference/js/firestore_.timestamp?hl=ko&authuser=0
+                // 클릭한 당시의 날짜값 가져오기 가능
+                startDate: Timestamp.fromDate(new Date()), // Timestamp
+                title: title, // 입력받아오는 값
+                writer: writer, // 입력받아오는 값
+            });
+            console.log("Document written with ID: ", docRef.id);
+
+            // 값이 제대로 추가 되었다면 실행해주기
+            getBook();
+        // 위 메소드를 추가해주어야 값이 바로 실행이 됨
+
+        } catch (e) {
+            // 어떤 오류가 발생했는지, 발생했다면 어떻게 처리할지 작성
+            console.error("Error adding document: ", e);
+        }
+
+        // try catch 상관없이 실행될 내용
+        setTitle("");
+        setWriter("");
+        // value={title},value={writer} 각각의 value 값으로 넣어주기
+    }
 
 
     // 책을 가져오는 메소드
@@ -92,57 +136,57 @@ export default function BookComp() {
     // 책 제목을 통해서 책을 찾는 메소드
     // 데이터읽기 => 단순쿼리 => 쿼리 실행
     // https://firebase.google.com/docs/firestore/query-data/queries?hl=ko#execute_a_query
-    const searchBook = async(e) => {
-
-        e.preventDefault();
-
-        // const q = query(collection(db, "cities"), where("capital", "==", true));
-        const q = query(collection(db, "readingbooks"), where("title", "==", searchTitle));
-
-        // 배열에 담아서 사용
-        const querySnapshot = await getDocs(q);
-
-        let array = [];
-
-        querySnapshot.forEach((doc) => {
-
-            array.push(
-                {
-                    id : doc.id,
-                    ...doc.data()
-                }
-            )
-
-            // doc.data() is never undefined for query doc snapshots
-            console.log(doc.id, " => ", doc.data());
-        });
-
-        // 찾은 정보값 화면에 출력
-        setSearchBooks(array);
-
-    }
-
     // const searchBook = async(e) => {
+
     //     e.preventDefault();
+
+    //     // const q = query(collection(db, "cities"), where("capital", "==", true));
     //     const q = query(collection(db, "readingbooks"), where("title", "==", searchTitle));
-    
+
     //     // 배열에 담아서 사용
     //     const querySnapshot = await getDocs(q);
+
     //     let array = [];
-        
+
     //     querySnapshot.forEach((doc) => {
+
     //         array.push(
     //             {
     //                 id : doc.id,
     //                 ...doc.data()
     //             }
     //         )
+
+    //         // doc.data() is never undefined for query doc snapshots
     //         console.log(doc.id, " => ", doc.data());
     //     });
+
     //     // 찾은 정보값 화면에 출력
-    //     setSearchBooks(array)
-    
+    //     setSearchBooks(array);
+
     // }
+
+    const searchBook = async(e) => {
+        e.preventDefault();
+        const q = query(collection(db, "readingbooks"), where("title", "==", searchTitle));
+    
+        // 배열에 담아서 사용
+        const querySnapshot = await getDocs(q);
+        let array = [];
+        
+        querySnapshot.forEach((doc) => {
+            array.push(
+                {
+                    id : doc.id,
+                    ...doc.data()
+                }
+            )
+            console.log(doc.id, " => ", doc.data());
+        });
+        // 찾은 정보값 화면에 출력
+        setSearchBooks(array)
+    
+    }
 
 
 
@@ -168,8 +212,14 @@ export default function BookComp() {
         <div>
             <h3>Reading Books Collection</h3>
             <h3>책 추가</h3>
+            <form onSubmit={addBook}>
+                <label htmlFor="">도서명</label>
+                <input type="text" value={title} onChange={(e) => { setTitle(e.target.value) }} /> <br />
+                <label htmlFor="">작가명</label>
+                <input type="text" value={writer} onChange={(e) => { setWriter(e.target.value) }} /> <br />
+                <button type='submit'>추가</button>
+            </form>
 
-            <AddBookBox getBook={getBook}/>
 
             <hr />
             <form onSubmit={ searchBook }>
